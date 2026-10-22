@@ -2,7 +2,16 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, View, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
-import { Page, Title, T, Button, Row, ErrorText } from "../../components/ui";
+import {
+  Page,
+  Title,
+  T,
+  Button,
+  Row,
+  ErrorText,
+  Heading,
+  Stepper,
+} from "../../components/ui";
 import { productById, money } from "../../lib/catalog";
 import { images } from "../../lib/images";
 import { useStore } from "../../lib/provider";
@@ -43,7 +52,7 @@ export default function Detail() {
           },
         };
       });
-      setMessage("Added to your bag.");
+      setMessage("Added to bag");
     } catch (e) {
       setMessage(
         e instanceof Error ? e.message : "Unable to save. Please try again.",
@@ -81,7 +90,7 @@ export default function Detail() {
             key={src}
             source={images[src]}
             contentFit="cover"
-            style={{ width: width - 40, height: (width - 40) * 0.85 }}
+            style={{ width: width - 40, height: (width - 40) * 1.25 }}
             accessibilityLabel={`${p.name} image ${i + 1}`}
           />
         ))}
@@ -94,16 +103,18 @@ export default function Detail() {
         </View>
         <T size={20}>{money(p.price)}</T>
       </Row>
-      <T muted>{p.finish}</T>
+      <T muted style={{ marginTop: -14 }}>
+        {p.finish}
+      </T>
       <T>{p.description}</T>
-      <T>
+      <T size={14} muted>
         {p.stock === 0
           ? "Out of stock"
           : p.stock <= 5
             ? `Only ${p.stock} left`
             : "In stock"}
       </T>
-      <T>{p.category === "sneakers" ? "Size (US)" : "Size"}</T>
+      <Heading>{p.category === "sneakers" ? "Size (US)" : "Size"}</Heading>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {p.sizes.map((value) => (
           <View key={value} style={{ minWidth: 52 }}>
@@ -119,29 +130,25 @@ export default function Detail() {
           </View>
         ))}
       </View>
-      <Row>
-        <Button
-          secondary
-          label="−"
-          id="quantity-decrease"
-          disabled={quantity <= 1}
-          onPress={() => setQuantity((q) => q - 1)}
-        />
-        <T accessibilityLabel="quantity-value">{quantity}</T>
-        <Button
-          secondary
-          label="+"
-          id="quantity-increase"
-          disabled={quantity >= p.stock}
-          onPress={() => setQuantity((q) => q + 1)}
-        />
-      </Row>
-      <Title>Details & care</Title>
-      {p.facts.map((fact) => (
-        <T key={fact} size={14} muted>
-          {fact}
-        </T>
-      ))}
+      <Heading>Quantity</Heading>
+      <Stepper
+        value={quantity}
+        max={p.stock}
+        onChange={setQuantity}
+        ids={{
+          decrease: "quantity-decrease",
+          increase: "quantity-increase",
+          value: "quantity-value",
+        }}
+      />
+      <View style={{ gap: 6 }}>
+        <Heading>Details</Heading>
+        {p.facts.map((fact) => (
+          <T key={fact} size={14} muted>
+            {`\u2022  ${fact}`}
+          </T>
+        ))}
+      </View>
     </Page>
   );
 }

@@ -23,7 +23,11 @@ export function Summary({
       ].map(([label, amount]) => (
         <Row key={label}>
           <T size={label === "Total" ? 20 : 14}>{label}</T>
-          <T size={label === "Total" ? 20 : 14}>{money(Number(amount))}</T>
+          <T size={label === "Total" ? 20 : 14}>
+            {label === "Delivery" && amount === 0
+              ? "Free"
+              : money(Number(amount))}
+          </T>
         </Row>
       ))}
     </View>

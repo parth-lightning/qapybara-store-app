@@ -2,7 +2,17 @@ import { useRef, useState } from "react";
 import { router } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { Keyboard, type ScrollViewInstance } from "react-native";
-import { Page, Title, T, Field, Button, ErrorText } from "../components/ui";
+import {
+  Page,
+  Title,
+  T,
+  Field,
+  Button,
+  ErrorText,
+  Heading,
+  Option,
+} from "../components/ui";
+import { View } from "react-native";
 import { Summary } from "../components/summary";
 import { useStore } from "../lib/provider";
 import { addressSchema, type Address } from "../lib/schema";
@@ -84,7 +94,7 @@ export default function Checkout() {
   if (!cart.length)
     return (
       <Page>
-        <Title>Your bag is empty.</Title>
+        <Title>Your bag is empty</Title>
         <Button
           label="Continue shopping"
           onPress={() => router.replace("/shop")}
@@ -93,13 +103,15 @@ export default function Checkout() {
     );
   return (
     <Page scrollRef={scrollRef}>
-      <Title>
-        {step === "shipping"
-          ? "Shipping address"
-          : step === "payment"
-            ? "Payment"
-            : "Review order"}
-      </Title>
+      <View>
+        <Title>
+          {step === "shipping"
+            ? "Shipping"
+            : step === "payment"
+              ? "Payment"
+              : "Review"}
+        </Title>
+      </View>
       {step === "shipping" ? (
         <>
           {(
@@ -141,17 +153,21 @@ export default function Checkout() {
               }
             />
           ))}
-          <T>United States</T>
-          <T>Delivery</T>
-          <Button
-            secondary={delivery !== "standard"}
-            label="Standard · 4 to 6 days · $8 or free at $150"
+          <T size={14} muted>
+            We ship within the United States.
+          </T>
+          <Heading>Delivery</Heading>
+          <Option
+            selected={delivery === "standard"}
+            label="Standard"
+            detail="4 to 6 days · $8, free over $150"
             id="delivery-standard"
             onPress={() => setDelivery("standard")}
           />
-          <Button
-            secondary={delivery !== "express"}
-            label="Express · 1 to 2 days · $18"
+          <Option
+            selected={delivery === "express"}
+            label="Express"
+            detail="1 to 2 days · $18"
             id="delivery-express"
             onPress={() => setDelivery("express")}
           />
@@ -169,15 +185,17 @@ export default function Checkout() {
         </>
       ) : step === "payment" ? (
         <>
-          <Button
-            secondary={payment !== "delivery"}
+          <Option
+            selected={payment === "delivery"}
             label="Pay on delivery"
+            detail="Pay when it arrives"
             id="payment-delivery"
             onPress={() => setPayment("delivery")}
           />
-          <Button
-            secondary={payment !== "card"}
+          <Option
+            selected={payment === "card"}
             label="Card"
+            detail="Visa, Mastercard and Amex"
             id="payment-card"
             onPress={() => setPayment("card")}
           />
@@ -190,15 +208,12 @@ export default function Checkout() {
               setStep("review");
             }}
           />
-          <Button
-            secondary
-            label="Edit shipping"
-            onPress={() => setStep("shipping")}
-          />
+          <Button secondary label="Back" onPress={() => setStep("shipping")} />
         </>
       ) : (
         <>
-          <T>
+          <Heading>Ship to</Heading>
+          <T size={14}>
             {address.name}
             {"\n"}
             {address.address}
@@ -209,16 +224,19 @@ export default function Checkout() {
             {"\n"}
             {address.phone}
           </T>
-          <T>
+          <Heading>Delivery and payment</Heading>
+          <T size={14}>
             {delivery === "express"
-              ? "Express delivery, 1 to 2 days"
-              : "Standard delivery, 4 to 6 days"}
+              ? "Express, 1 to 2 days"
+              : "Standard, 4 to 6 days"}
             {"\n"}
             {payment === "card" ? "Card" : "Pay on delivery"}
           </T>
+          <Heading>Items</Heading>
           {cart.map((l, i) => (
-            <T key={i}>
-              {l.quantity} × {productById(l.productId)?.name} · Size {l.size} ·{" "}
+            <T key={i} size={14}>
+              {l.quantity} × {productById(l.productId)?.name}, size {l.size}
+              {"   "}
               {money((productById(l.productId)?.price ?? 0) * l.quantity)}
             </T>
           ))}
@@ -230,16 +248,7 @@ export default function Checkout() {
             onPress={place}
             busy={busy}
           />
-          <Button
-            secondary
-            label="Edit payment"
-            onPress={() => setStep("payment")}
-          />
-          <Button
-            secondary
-            label="Edit shipping"
-            onPress={() => setStep("shipping")}
-          />
+          <Button secondary label="Back" onPress={() => setStep("payment")} />
         </>
       )}
     </Page>

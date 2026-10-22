@@ -1,8 +1,15 @@
 import { useState } from "react";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { View } from "react-native";
-import { Page, Title, T, Button, Row, ErrorText } from "../../components/ui";
+import { Pressable, View } from "react-native";
+import {
+  Page,
+  Title,
+  T,
+  Button,
+  ErrorText,
+  Stepper,
+} from "../../components/ui";
 import { useStore } from "../../lib/provider";
 import { cartReducer, type CartAction } from "../../lib/store";
 import { productById, money } from "../../lib/catalog";
@@ -39,6 +46,7 @@ export default function Cart() {
           <Image
             source={images["/images/category-sneakers.webp"]}
             style={{ width: "100%", height: 220 }}
+            contentFit="cover"
           />
           <Title>Your bag is empty</Title>
           <T muted>Find something you love.</T>
@@ -49,54 +57,57 @@ export default function Cart() {
           {cart.map((l, i) => {
             const p = productById(l.productId);
             return (
-              <View key={`${l.productId}-${l.size}`} style={{ gap: 12 }}>
-                <Row>
-                  <Image
-                    source={images[p?.images[0] ?? ""]}
-                    style={{ width: 90, height: 90 }}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <T size={20}>{p?.name ?? "Unavailable item"}</T>
-                    <T size={14} muted>
-                      Size {l.size}
+              <View
+                key={`${l.productId}-${l.size}`}
+                style={{ flexDirection: "row", gap: 14 }}
+              >
+                <Image
+                  source={images[p?.images[0] ?? ""]}
+                  style={{ width: 88, height: 110 }}
+                />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <View>
+                    <T size={16}>{p?.name ?? "Unavailable item"}</T>
+                    <T size={13} muted>
+                      {p?.finish ? `${p.finish} · ` : ""}Size {l.size}
                     </T>
-                    <T>{money((p?.price ?? 0) * l.quantity)}</T>
+                    <T size={15}>{money((p?.price ?? 0) * l.quantity)}</T>
                   </View>
-                </Row>
-                <Row>
-                  <Button
-                    secondary
-                    label="−"
-                    id={`cart-decrease-${i}`}
-                    disabled={l.quantity <= 1}
-                    onPress={() =>
-                      change({
-                        type: "quantity",
-                        ...l,
-                        quantity: l.quantity - 1,
-                      })
-                    }
-                  />
-                  <T>{l.quantity}</T>
-                  <Button
-                    secondary
-                    label="+"
-                    id={`cart-increase-${i}`}
-                    onPress={() =>
-                      change({
-                        type: "quantity",
-                        ...l,
-                        quantity: l.quantity + 1,
-                      })
-                    }
-                  />
-                  <Button
-                    secondary
-                    label="Remove"
-                    id={`cart-remove-${i}`}
-                    onPress={() => change({ type: "remove", ...l })}
-                  />
-                </Row>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Stepper
+                      value={l.quantity}
+                      max={p?.stock ?? 99}
+                      onChange={(quantity) =>
+                        change({ type: "quantity", ...l, quantity })
+                      }
+                      ids={{
+                        decrease: `cart-decrease-${i}`,
+                        increase: `cart-increase-${i}`,
+                      }}
+                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`cart-remove-${i}`}
+                      testID={`cart-remove-${i}`}
+                      hitSlop={10}
+                      onPress={() => change({ type: "remove", ...l })}
+                    >
+                      <T
+                        size={14}
+                        muted
+                        style={{ textDecorationLine: "underline" }}
+                      >
+                        Remove
+                      </T>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
             );
           })}
@@ -108,7 +119,7 @@ export default function Cart() {
           </T>
           <Summary items={cart} />
           <Button
-            label="Continue to checkout"
+            label="Checkout"
             id="checkout-start"
             onPress={() => router.push("/checkout")}
           />

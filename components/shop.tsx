@@ -17,16 +17,18 @@ export function ProductCard({ product: p }: { product: Product }) {
       >
         <Image
           source={images[p.images[0] ?? ""]}
-          style={{ width: "100%", aspectRatio: 1 }}
+          style={{ width: "100%", aspectRatio: 4 / 5 }}
           contentFit="cover"
           accessibilityLabel={`${p.name} ${p.finish}`}
         />
-        <T size={16}>{p.name}</T>
+        <View>
+          <T size={15}>{p.name}</T>
+          <T size={13} muted>
+            {p.finish}
+          </T>
+          <T size={15}>{money(p.price)}</T>
+        </View>
       </Pressable>
-      <T size={12} muted>
-        {p.finish}
-      </T>
-      <T>{money(p.price)}</T>
     </View>
   );
 }
@@ -75,15 +77,17 @@ export function Listing({ category = "" }: { category?: string }) {
     );
   return (
     <Page>
-      <Title>
-        {categories.find((c) => c.slug === cat)?.name ?? "Shop all"}
-      </Title>
-      <T muted>
-        {categories.find((c) => c.slug === cat)?.description ??
-          "Everyday pieces, thoughtfully chosen."}
-      </T>
+      {category ? (
+        <View>
+          <Title>{categories.find((c) => c.slug === category)?.name}</Title>
+          <T muted>
+            {categories.find((c) => c.slug === category)?.description}
+          </T>
+        </View>
+      ) : null}
       <Field
-        label="Search products"
+        label="Search"
+        placeholder="Sneakers, tees, jackets"
         id="search-products"
         value={search}
         onChangeText={setSearch}
@@ -105,7 +109,7 @@ export function Listing({ category = "" }: { category?: string }) {
       </ScrollView>
       <Button
         secondary
-        label={filters ? "Hide sort and price" : "Sort and price range"}
+        label={filters ? "Hide filters" : "Sort and filter"}
         id="show-filters"
         onPress={() => setFilters(!filters)}
       />
@@ -114,8 +118,8 @@ export function Listing({ category = "" }: { category?: string }) {
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {[
               ["newest", "Newest"],
-              ["low", "Price up"],
-              ["high", "Price down"],
+              ["low", "Price: low to high"],
+              ["high", "Price: high to low"],
             ].map(([value, label]) => (
               <Button
                 key={value}
@@ -127,14 +131,14 @@ export function Listing({ category = "" }: { category?: string }) {
           </View>
           <Field
             id="price-min"
-            label="Minimum price (USD)"
+            label="Min price ($)"
             keyboardType="numeric"
             value={minimum}
             onChangeText={setMinimum}
           />
           <Field
             id="price-max"
-            label="Maximum price (USD)"
+            label="Max price ($)"
             keyboardType="numeric"
             value={maximum}
             onChangeText={setMaximum}

@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { Page, Title, T, Button, ErrorText } from "../../components/ui";
+import {
+  Page,
+  T,
+  Button,
+  ErrorText,
+  Heading,
+  Option,
+} from "../../components/ui";
+import { View } from "react-native";
 import { useStore } from "../../lib/provider";
 import type { State } from "../../lib/store";
 export default function Account() {
@@ -15,21 +23,19 @@ export default function Account() {
   }
   return (
     <Page>
-      <Title>Your details</Title>
-      <T>
-        {state.session?.name}
-        {"\n"}
-        {state.session?.email}
-      </T>
-      <Title>Appearance</Title>
+      <View>
+        <T size={22}>{state.session?.name}</T>
+        <T muted>{state.session?.email}</T>
+      </View>
+      <Heading>Appearance</Heading>
       {(["system", "light", "dark"] satisfies State["theme"][]).map((t) => (
-        <Button
+        <Option
           key={t}
           label={
-            t === "system" ? "Follow system" : t === "light" ? "Light" : "Dark"
+            t === "system" ? "Match phone" : t === "light" ? "Light" : "Dark"
           }
           id={`theme-${t}`}
-          secondary={state.theme !== t}
+          selected={state.theme === t}
           onPress={() => theme(t)}
         />
       ))}
@@ -47,9 +53,6 @@ export default function Account() {
           }
         }}
       />
-      <T size={12} muted>
-        USD · United States
-      </T>
     </Page>
   );
 }

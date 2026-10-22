@@ -75,9 +75,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         </T>
       </View>
       {created && !signup ? (
-        <T accessibilityLiveRegion="polite">
-          Account created. Sign in with your new details.
-        </T>
+        <T accessibilityLiveRegion="polite">Account created. Please sign in.</T>
       ) : null}
       {signup ? (
         <Field
@@ -120,12 +118,12 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         secureTextEntry={!show}
         autoCapitalize="none"
         autoComplete={signup ? "new-password" : "current-password"}
-      />
-      <Button
-        secondary
-        label={show ? "Hide password" : "Show password"}
-        id="toggle-password"
-        onPress={() => setShow(!show)}
+        hint={signup ? "At least 8 characters" : undefined}
+        action={{
+          label: show ? "Hide" : "Show",
+          id: "toggle-password",
+          onPress: () => setShow(!show),
+        }}
       />
       <ErrorText text={error} />
       <Button
@@ -136,14 +134,9 @@ export function Auth({ signup = false }: { signup?: boolean }) {
       />
       <Button
         secondary
-        label={signup ? "Back to sign in" : "Create an account"}
+        label={signup ? "I have an account" : "Create an account"}
         onPress={() => router.push(signup ? "/login" : "/signup")}
       />
-      {signup ? (
-        <T size={12} muted>
-          At least 8 characters.
-        </T>
-      ) : null}
     </Page>
   );
 }

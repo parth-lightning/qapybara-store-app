@@ -68,20 +68,14 @@ function Root() {
         </Stack.Protected>
         <Stack.Protected guard={!!state.session}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="product/[id]" options={{ title: "Product" }} />
-          <Stack.Screen
-            name="category/[slug]"
-            options={{ title: "Category" }}
-          />
+          <Stack.Screen name="product/[id]" options={{ title: "" }} />
+          <Stack.Screen name="category/[slug]" options={{ title: "" }} />
           <Stack.Screen name="checkout" options={{ title: "Checkout" }} />
           <Stack.Screen
             name="confirmation"
-            options={{ title: "Order confirmed", headerBackVisible: false }}
+            options={{ title: "", headerBackVisible: false }}
           />
-          <Stack.Screen
-            name="order/[id]"
-            options={{ title: "Order details" }}
-          />
+          <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
         </Stack.Protected>
       </Stack>
     </>
