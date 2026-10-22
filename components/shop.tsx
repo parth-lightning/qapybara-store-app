@@ -1,0 +1,200 @@
+import React, { useState } from "react";
+import { View, ScrollView, Pressable } from "react-native";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { Page, Title, T, Button, Field, ErrorText } from "./ui";
+import { categories, money, products, type Product } from "../lib/catalog";
+import { images } from "../lib/images";
+import { cartReducer } from "../lib/store";
+import { useStore } from "../lib/provider";
+export function ProductCard({ product: p }: { product: Product }) {
+  const { update } = useStore();
+  const [message, setMessage] = useState("");
+  async function add() {
+    try {
+      await update((s) => {
+        if (!s.session) throw new Error("Please sign in.");
+        return {
+          ...s,
+          carts: {
+            ...s.carts,
+            [s.session.id]: cartReducer(s.carts[s.session.id] ?? [], {
+              type: "add",
+              line: { productId: p.id, variant: "Warm white", quantity: 1 },
+            }),
+          },
+        };
+      });
+      setMessage("Added to bag");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Unable to save. Try again.");
+    }
+  }
+  return (
+    <View style={{ width: "48%", gap: 8, marginBottom: 16 }}>
+      <Pressable
+        accessibilityRole="button"
+        testID={`product-${p.id}`}
+        accessibilityLabel={`product-${p.id}`}
+        onPress={() => router.push(`/product/${p.id}`)}
+        style={{ gap: 8 }}
+      >
+        <Image
+          source={images[p.images[0] ?? ""]}
+          style={{ width: "100%", aspectRatio: 1 }}
+          contentFit="cover"
+          accessibilityLabel={`${p.name} ${p.finish}`}
+        />
+        <T size={20}>{p.name}</T>
+      </Pressable>
+      <T size={12} muted>
+        {p.finish}
+      </T>
+      <T>{money(p.price)}</T>
+      <Button
+        secondary
+        label={p.stock ? "Add to bag" : "Out of stock"}
+        id={`add-to-cart-${p.id}`}
+        disabled={!p.stock}
+        onPress={add}
+      />
+      {message ? (
+        <T size={12} accessibilityLiveRegion="polite">
+          {message}
+        </T>
+      ) : null}
+    </View>
+  );
+}
+export function Grid({ items }: { items: Product[] }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "space-between",
+      }}
+    >
+      {items.map((p) => (
+        <ProductCard key={p.id} product={p} />
+      ))}
+    </View>
+  );
+}
+export function Listing({ category = "" }: { category?: string }) {
+  const [search, setSearch] = useState("");
+  const [cat, setCat] = useState(category);
+  const [sort, setSort] = useState("newest");
+  const [minimum, setMinimum] = useState("");
+  const [maximum, setMaximum] = useState("");
+  const [filters, setFilters] = useState(false);
+  const valid =
+    (!minimum || (Number.isFinite(Number(minimum)) && Number(minimum) >= 0)) &&
+    (!maximum || (Number.isFinite(Number(maximum)) && Number(maximum) >= 0)) &&
+    (!minimum || !maximum || Number(minimum) <= Number(maximum));
+  const items = products
+    .filter(
+      (p) =>
+        (!cat || p.category === cat) &&
+        `${p.name} ${p.finish} ${p.description}`
+          .toLowerCase()
+          .includes(search.toLowerCase()) &&
+        (!minimum || p.price >= Number(minimum) * 100) &&
+        (!maximum || p.price <= Number(maximum) * 100),
+    )
+    .sort((a, b) =>
+      sort === "low"
+        ? a.price - b.price
+        : sort === "high"
+          ? b.price - a.price
+          : b.added - a.added,
+    );
+  return (
+    <Page>
+      <Title>
+        {categories.find((c) => c.slug === cat)?.name ?? "The collection"}
+      </Title>
+      <T muted>Considered forms. Honest materials.</T>
+      <Field
+        label="Search lights"
+        id="search-products"
+        value={search}
+        onChangeText={setSearch}
+      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 8 }}
+      >
+        {[{ slug: "", name: "All" }, ...categories].map((c) => (
+          <Button
+            key={c.slug}
+            label={c.name}
+            secondary={cat !== c.slug}
+            id={`filter-${c.slug || "all"}`}
+            onPress={() => setCat(c.slug)}
+          />
+        ))}
+      </ScrollView>
+      <Button
+        secondary
+        label={filters ? "Hide sort and price" : "Sort and price range"}
+        id="show-filters"
+        onPress={() => setFilters(!filters)}
+      />
+      {filters ? (
+        <>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {[
+              ["newest", "Newest"],
+              ["low", "Price up"],
+              ["high", "Price down"],
+            ].map(([value, label]) => (
+              <Button
+                key={value}
+                label={label ?? ""}
+                secondary={sort !== value}
+                onPress={() => setSort(value ?? "newest")}
+              />
+            ))}
+          </View>
+          <Field
+            id="price-min"
+            label="Minimum price (USD)"
+            keyboardType="numeric"
+            value={minimum}
+            onChangeText={setMinimum}
+          />
+          <Field
+            id="price-max"
+            label="Maximum price (USD)"
+            keyboardType="numeric"
+            value={maximum}
+            onChangeText={setMaximum}
+          />
+          {!valid ? <ErrorText text="Enter a valid price range." /> : null}
+        </>
+      ) : null}
+      <T size={14} muted>
+        {valid ? items.length : 0} lights
+      </T>
+      {valid && items.length ? (
+        <Grid items={items} />
+      ) : (
+        <>
+          <Title>No lights found.</Title>
+          <T muted>Try another search or a wider price range.</T>
+          <Button
+            label="Clear filters"
+            onPress={() => {
+              setSearch("");
+              setCat("");
+              setMinimum("");
+              setMaximum("");
+            }}
+          />
+        </>
+      )}
+    </Page>
+  );
+}

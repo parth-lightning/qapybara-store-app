@@ -1,0 +1,12 @@
+{
+  "expoSDK": 58,
+  "expoVersion": "58.0.17",
+  "package": "dev.qapybara.stillform",
+  "architecture": "arm64-v8a",
+  "apk": "/home/shahid/codes/hackathons/qapybara-store-app/android/app/build/outputs/apk/release/app-release.apk",
+  "bytes": 36097699,
+  "MiB": 34.43,
+  "sha256": "b6fa044aff64f81fbc5a2d20d9ac8734b89a919b0e8f9b63b6af13aac778b1e1",
+  "unitTests": 42,
+  "expoDoctorChecks": 20
+}
