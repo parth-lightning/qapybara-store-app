@@ -1,9 +1,5 @@
-
-> qapybara-store-app@1.0.0 test
-> jest --runInBand
-
 Test Suites: 1 passed, 1 total
-Tests:       42 passed, 42 total
+Tests:       50 passed, 50 total
 Snapshots:   0 total
-Time:        1.324 s, estimated 2 s
+Time:        2.624 s
 Ran all test suites.

@@ -15,7 +15,7 @@ export default function Account() {
   }
   return (
     <Page>
-      <Title>At home with Stillform</Title>
+      <Title>Your details</Title>
       <T>
         {state.session?.name}
         {"\n"}
@@ -48,8 +48,7 @@ export default function Account() {
         }}
       />
       <T size={12} muted>
-        QApybara demonstration store. Works offline. USD · United States. No
-        real payments or deliveries.
+        USD · United States
       </T>
     </Page>
   );

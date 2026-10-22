@@ -155,9 +155,11 @@ export function ErrorText({ text }: { text: string }) {
 export function Page({
   children,
   scrollRef,
+  footer,
 }: {
   children: React.ReactNode;
   scrollRef?: React.RefObject<ScrollViewInstance | null>;
+  footer?: React.ReactNode;
 }) {
   const c = useTheme();
   const headerHeight = useHeaderHeight();
@@ -184,6 +186,18 @@ export function Page({
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {footer ? (
+        <View
+          style={{
+            padding: 16,
+            gap: 10,
+            borderTopWidth: 1,
+            borderTopColor: c.border,
+          }}
+        >
+          {footer}
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }

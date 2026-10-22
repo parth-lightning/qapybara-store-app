@@ -1,0 +1,14 @@
+lib/catalog.ts:62:    description: "A light mesh runner with soft suede panels.",
+lib/catalog.ts:227:    description: "A lightweight bomber with a smooth, clean finish.",
+lib/catalog.ts:256:    description: "A light shell for changeable days.",
+components/ui.tsx:28:        : "light"
+lib/store.ts:24:  theme: z.enum(["system", "light", "dark"]),
+lib/store.ts:63:export const demoUser: User = {
+lib/store.ts:64:  id: "demo",
+lib/store.ts:65:  email: "demo@qapybara.dev",
+lib/store.ts:77:    data.email === demoUser.email ||
+lib/store.ts:96:  if (email === demoUser.email && password === "Demo1234!")
+lib/store.ts:97:    return { ...state, session: demoUser };
+app/_layout.tsx:52:      <StatusBar style={c.background === "#171e1e" ? "light" : "dark"} />
+app/(tabs)/account.tsx:25:      {(["system", "light", "dark"] satisfies State["theme"][]).map((t) => (
+app/(tabs)/account.tsx:29:            t === "system" ? "Follow system" : t === "light" ? "Light" : "Dark"

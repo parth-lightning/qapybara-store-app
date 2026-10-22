@@ -1,56 +1,109 @@
-# Verification
+# Apparel release verification
 
-2026-10-22. Physical Android 15 phone, ADB serial `82f1c8d5`. Only Stillform was installed or updated. No other app was uninstalled or changed.
-
-## Release
-
-- Expo SDK 58, Expo 58.0.17, React Native 0.88.0.
-- Package `dev.qapybara.stillform`, application label Stillform, version 1.0.0.
-- Release build, debug signing as permitted, arm64-v8a for the connected phone. Min SDK 24, target SDK 36, compile SDK 37.
-- APK: `/home/shahid/codes/hackathons/qapybara-store-app/android/app/build/outputs/apk/release/app-release.apk`.
-- 36,097,699 bytes, 34.43 MiB.
-- SHA-256 `b6fa044aff64f81fbc5a2d20d9ac8734b89a919b0e8f9b63b6af13aac778b1e1`.
-- `apksigner verify` passes. The installed phone APK has the identical SHA-256. Evidence: `release.json` and `device-apk-verification.json`.
-- Full requested `expo prebuild --platform android` and Gradle `assembleRelease` completed. The first build took 27m 37s. Subsequent fixes were rebuilt with `:app:assembleRelease`; the final build succeeded in 1m. Logs: `android-build.log`, `android-final-build.log`.
+Verified on 22 October 2026 in Asia/Kolkata. Website source commits: `7d6379a` and `8e86a75`. App: `dev.qapybara.stillform`. Phone: Redmi Note 10 Lite, serial `82f1c8d5`.
 
 ## Automated checks
 
-- `npx tsc --noEmit`: pass, no diagnostics (`typecheck.log`).
-- `npm run lint`: pass, no warnings or errors (`lint.log`).
-- `npx expo-doctor`: 20/20 checks pass (`expo-doctor.log`).
-- `npm test`: 42 tests pass in one jest-expo suite (`unit-tests.log`). Pricing 5, cart operations/recovery 11, validation 9, auth 6, order placement 9, persistence boundaries 2.
-- Tests cover standard and express delivery, free delivery, cents and tax, variant merging, combined stock, quantity/remove behavior, invalid addresses/credentials, duplicate accounts, signup then login, order revalidation, idempotency, immutable order prices, current-user-only cart clearing and storage round trips.
-- Final byte comparisons pass for `design/tokens.ts`, `lib/catalog.ts`, `lib/pricing.ts`, `lib/schema.ts` against the website. Source website commit at verification: `3bfaf82`.
+- `npx jest --runInBand`: **50 tests pass**.
+- `npx tsc --noEmit`: **passes**.
+- `npx expo lint`: **passes**.
+- `bash -n scripts/build-android.sh`: **passes**.
+- Catalog, pricing, schema and design tokens match the website byte for byte.
+- All 38 website WebP images are unchanged copies. Each image and the separately generated login banner was also found byte for byte inside the release APK.
+- Tests cover category/product counts, both size sets, required and category-correct sizes, separate clothing-size lines and persisted snapshots, standard delivery below/at/above $150, express delivery, 8% tax, deterministic six-digit order numbers, authentication, account separation, combined stock validation, idempotent order placement and catalog upgrades.
 
-## Phone journey
+`copy-audit.txt` records source matches for the requested words and long dash characters. Remaining matches are theme configuration, internal legacy login credentials, and website descriptions of lightweight apparel. There are no retired product references, long dash characters, gallery instructions, progress breadcrumbs or developer-facing shop notices. Bag and order history titles are shown once; order details use the short order number as their main content heading.
 
-All interaction used ADB shell input, UI Automator dumps and `adb exec-out screencap -p`. `scripts/phone.py` is the helper. The journey was iterated during fixes, with affected flows rechecked after rebuilding. Final APK smoke checks repeated auth, cart actions and switching between the saved accounts.
+## Build and artifact
 
-- Launch signed out. The app follows the dark system theme. Wrong demo credentials show the expected error. Show/hide changes the native password accessibility flag. Correct demo credentials sign in.
-- Home hero, category navigation, all-products screen and search work. Dome search opens the matching detail. The gallery swipes to page 2 of 3. Soft white selection and detail add-to-bag work.
-- Increase Dome to quantity 2. Badge shows 2; subtotal $378.00, standard delivery $0.00, tax $30.24, total $408.24. Force-stop and restart preserve the session, manual appearance and bag.
-- Submit empty shipping. Inline field errors appear and the page returns to the fields. Enter a valid US address. The keyboard leaves focused fields visible. Select express and demo card, review the correct $426.24 total, then place the order.
-- Order `SF-F8381DB9-80EC-4167-818A-9BB5917850BB` appears in confirmation, history and detail. The bag is empty. Force-stop and restart preserve the order.
-- Switch manually between light and dark. Search, products, cart, checkout, orders and forms retain the Stillform theme.
-- Sort by ascending price and apply $100 to $130 range. Exactly two lights remain, Line and Cone, in price order. Fold is out of stock; native add buttons are disabled in list and detail.
-- Add Pivot from the list. Its $99.00 subtotal, $8.00 delivery and $7.92 tax produce $114.92. Remove it and verify the photographed empty bag. Add it again and complete standard delivery / pay-on-delivery checkout.
-- Order `SF-6A7CA970-7254-4912-AA48-6C6E54B7B117` is confirmed at $114.92 and appears in history. Both payment choices are demo-only and take no charge.
-- Sign out. Submit invalid signup, correct fields, register Taylor Reed (`phone20261022@qapybara.dev` / `Phone1234!`). The account-created message appears. Sign in with the new credentials. The new user sees no demo orders and an empty bag. A process restart preserves this registered session.
-- Install the exact final APK. The registered session survives the update. Add Pivot, increase to quantity 2 ($221.84), remove, confirm empty, then add one Pivot again. Sign out. Repeat demo login failure, native password show/hide and successful login. Demo still has its own empty bag and two orders, while the registered user's saved Pivot remains separate.
-- Empty search shows the real empty state; clear filters restores results. The floor category filter returns four lights.
+Expo prebuild and Gradle `assembleRelease` pass. The final incremental build completed in 2m 32s. Logs: `android-build.log` and `android-final-build.log`.
 
-Final phone state: demo account signed in, Light selected, demo bag empty, two verification orders. The separate registered test account has one Pivot in its saved bag. Fresh installations start with no accounts beyond the seeded demo login and no bags/orders; test data exists only on the verification phone.
+APK: `android/app/build/outputs/apk/release/app-release.apk`
 
-## Findings fixed and rechecked
+- **38,358,763 bytes (36.58 MiB)**
+- SHA-256: `104c6b7182129bb5d727d1f61105f955e828079e6550ba1d33a4d8e39c45a473`
+- arm64-v8a; locally debug-signed release for device testing.
+- Installed using `adb -s 82f1c8d5 install -r`.
+- Artifact metadata: `release.json`. Installed APK comparison: `device-apk-verification.json`.
 
-- Android edge-to-edge keyboard handling initially covered lower shipping fields. Explicit KeyboardAvoidingView behavior and the SDK's actual header height now size the form viewport correctly. The ADB helper also avoids keyboard-covered coordinates. Both shipping and signup were rechecked.
-- Corrected fields initially retained stale validation styling until the next submit. Errors now clear as that field is edited. The final dark shipping keyboard capture shows valid fields without stale errors.
-- Phosphor's direct source export passes an unsupported web-only className prop to native Svg. The pinned, idempotent postinstall fix removes that prop. Direct imports include five icons instead of the entire icon library, reducing the release graph from 4,816 to about 1,800 modules. No types are suppressed.
-- A saved unavailable item can now be removed, and a delayed quantity event cannot recreate a removed line. Dedicated recovery tests pass; ordinary cart add/change/remove was rechecked on the exact final APK.
-- One intermediate packaging attempt failed because dependency cleanup overlapped the build. Dependencies were stabilized and the build rerun sequentially. The final release succeeds.
+Gradle skipped an image-only change during an incremental build. The build script now explicitly invalidates the generated JS/assets bundle before assembly, and the new login image was verified inside the APK. Dependency deprecation warnings remain informational; there are no build errors.
 
-No requested verification step remains blocked. This is intentionally an offline demo store with no real payment or fulfillment service.
+## Physical-device journey
+
+Airplane mode was enabled, Wi-Fi disabled and cellular data disabled during the entire app journey. All interactions used ADB input, UI Automator and screencap through `scripts/phone.py`; Artemis also confirmed the connected phone and initial screen. Screenshots are actual 1080 × 2400 phone captures.
+
+1. Installed over the previous release without clearing data. Existing local account/session and appearance survived; retired catalog lines and orders were removed on restoration.
+2. Signed out, checked rejected credentials, opened signup, checked inline validation, created Riley Stone's local account and signed in offline.
+3. Browsed home and the Sneakers category. Cards show only photo, name, colour and price. Opened Court Leather, confirmed no size was selected, and tapped Add to bag to see "Please select a size". Chose US 9 and added it.
+4. Verified bag size, badge and pricing. One pair: $135 subtotal + $8 delivery + $10.80 tax = **$153.80**. Increasing quantity to two changed the message to "You get free delivery." and shipping to $0; decreasing restored "Add $15.00 more for free delivery.".
+5. Checked empty shipping validation, entered a US address, selected standard delivery and pay on delivery, reviewed, placed the sneaker order and opened its history/detail. Order **SF-573462**, size 9, **$153.80**.
+6. Changed to dark appearance. Searched for Daily Tee and swiped to its second bundled photo. Checked missing-size validation, then added M and L. The same product appeared as two bag lines. Express delivery and Card were retained through review and placement. Order **SF-634504**, two sizes, **$93.60** ($70 + $18 + $5.60).
+7. Restarted the app and installed the refreshed image APK without clearing data. Session, theme and both orders remained. Confirmed empty bag, signed out, checked dark login/signup and signed back in.
+8. In light appearance, checked empty search and empty bag copy. Added an XL tee, force-stopped and relaunched the app, confirmed size XL remained, then removed it. Rechecked rejected and correct login.
+9. Repeated the two-size clothing purchase on the final compact order layout with standard delivery. Order **SF-113268**, **$83.60** ($70 + $8 + $5.60). Switched the system between light and dark while Follow system was selected; the confirmation updated correctly in place. Both actions fit on screen. Restarted again and confirmed all three orders remained.
+10. Refreshed order-list/detail, category and product screenshots in both themes. Screenshot review led to the wider login image, compact order grouping, removal of redundant order headings, and singular "1 product" copy.
+
+The initial ADB sequence sent Back twice while dismissing the keyboard, returning to the bag. The automation timing was corrected and checkout was repeated successfully. This was a verification-script issue, with no app change needed.
+
+## Storage and limits
+
+Accounts, session and appearance survive the catalog update. Retired product bags/orders are removed; current-catalog storage still requires schema validation. New snapshots preserve product, size, quantity, price and short order number. Request UUIDs remain internal and are never displayed. Local authentication and simulated payment/fulfillment remain entirely offline, with no remote service or cross-device synchronization.
 
 ## Screenshots
 
-Native captures in `screenshots/` include both themes: login/errors, home, category/filter, search/empty search, gallery/detail/stock, cart/empty/restored cart, shipping validation and keyboard, payment/review/confirmation, orders/detail, signup/validation/success and registered-account isolation. Each PNG is an unedited full-device screencap.
+All old screenshots were replaced. The full filename list follows; generated art sources and prompts are in `DESIGN.md`.
+
+- [phone-dark-account.png](screenshots/phone-dark-account.png)
+- [phone-dark-bag-two-sizes.png](screenshots/phone-dark-bag-two-sizes.png)
+- [phone-dark-category.png](screenshots/phone-dark-category.png)
+- [phone-dark-checkout-validation.png](screenshots/phone-dark-checkout-validation.png)
+- [phone-dark-confirmation.png](screenshots/phone-dark-confirmation.png)
+- [phone-dark-delivery.png](screenshots/phone-dark-delivery.png)
+- [phone-dark-empty-bag.png](screenshots/phone-dark-empty-bag.png)
+- [phone-dark-gallery.png](screenshots/phone-dark-gallery.png)
+- [phone-dark-home.png](screenshots/phone-dark-home.png)
+- [phone-dark-login.png](screenshots/phone-dark-login.png)
+- [phone-dark-order-detail.png](screenshots/phone-dark-order-detail.png)
+- [phone-dark-order-express.png](screenshots/phone-dark-order-express.png)
+- [phone-dark-orders-restored.png](screenshots/phone-dark-orders-restored.png)
+- [phone-dark-orders.png](screenshots/phone-dark-orders.png)
+- [phone-dark-payment.png](screenshots/phone-dark-payment.png)
+- [phone-dark-product-clothing.png](screenshots/phone-dark-product-clothing.png)
+- [phone-dark-product-sneaker.png](screenshots/phone-dark-product-sneaker.png)
+- [phone-dark-review.png](screenshots/phone-dark-review.png)
+- [phone-dark-search.png](screenshots/phone-dark-search.png)
+- [phone-dark-shipping.png](screenshots/phone-dark-shipping.png)
+- [phone-dark-signup.png](screenshots/phone-dark-signup.png)
+- [phone-dark-size-required.png](screenshots/phone-dark-size-required.png)
+- [phone-dark-sizes-clothing.png](screenshots/phone-dark-sizes-clothing.png)
+- [phone-light-account.png](screenshots/phone-light-account.png)
+- [phone-light-bag-restored.png](screenshots/phone-light-bag-restored.png)
+- [phone-light-bag-two-sizes.png](screenshots/phone-light-bag-two-sizes.png)
+- [phone-light-bag.png](screenshots/phone-light-bag.png)
+- [phone-light-category.png](screenshots/phone-light-category.png)
+- [phone-light-checkout-validation.png](screenshots/phone-light-checkout-validation.png)
+- [phone-light-confirmation.png](screenshots/phone-light-confirmation.png)
+- [phone-light-delivery.png](screenshots/phone-light-delivery.png)
+- [phone-light-empty-bag.png](screenshots/phone-light-empty-bag.png)
+- [phone-light-empty-search.png](screenshots/phone-light-empty-search.png)
+- [phone-light-free-delivery.png](screenshots/phone-light-free-delivery.png)
+- [phone-light-home.png](screenshots/phone-light-home.png)
+- [phone-light-login-error.png](screenshots/phone-light-login-error.png)
+- [phone-light-login.png](screenshots/phone-light-login.png)
+- [phone-light-order-detail.png](screenshots/phone-light-order-detail.png)
+- [phone-light-order-sneaker.png](screenshots/phone-light-order-sneaker.png)
+- [phone-light-orders.png](screenshots/phone-light-orders.png)
+- [phone-light-payment.png](screenshots/phone-light-payment.png)
+- [phone-light-product-clothing.png](screenshots/phone-light-product-clothing.png)
+- [phone-light-product-sneaker.png](screenshots/phone-light-product-sneaker.png)
+- [phone-light-review.png](screenshots/phone-light-review.png)
+- [phone-light-search.png](screenshots/phone-light-search.png)
+- [phone-light-shipping.png](screenshots/phone-light-shipping.png)
+- [phone-light-signup-validation.png](screenshots/phone-light-signup-validation.png)
+- [phone-light-signup.png](screenshots/phone-light-signup.png)
+- [phone-light-size-required.png](screenshots/phone-light-size-required.png)
+- [phone-light-sizes-sneaker.png](screenshots/phone-light-sizes-sneaker.png)
+
+## Completion
+
+All 50 screenshots were visually inspected, including the final compact confirmations and order details. The installed APK SHA-256 matches the built APK exactly. The phone's original network settings and system night mode were restored. Final app state: Riley Stone signed in, Light selected, empty bag, three local test orders. No requested step remains blocked.

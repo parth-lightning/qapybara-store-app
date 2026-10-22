@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
-import { initialState, stateSchema, type State } from "./store";
+import { initialState, restoreState, type State } from "./store";
 const KEY = "stillform-native-v1";
 export const hashPassword = async (password: string, salt: string) =>
   Crypto.digestStringAsync(
@@ -33,7 +33,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
     let active = true;
     AsyncStorage.getItem(KEY)
       .then((raw) => {
-        const next = raw ? stateSchema.parse(JSON.parse(raw)) : initialState;
+        const next = restoreState(raw ? JSON.parse(raw) : null);
         if (active) {
           ref.current = next;
           setState(next);

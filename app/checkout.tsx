@@ -93,19 +93,12 @@ export default function Checkout() {
     );
   return (
     <Page scrollRef={scrollRef}>
-      <T size={14} muted>
-        {step === "shipping"
-          ? "Shipping  /  Payment  /  Review"
-          : step === "payment"
-            ? "Shipping complete  /  Payment  /  Review"
-            : "Shipping complete  /  Payment complete  /  Review"}
-      </T>
       <Title>
         {step === "shipping"
-          ? "Where should we send it?"
+          ? "Shipping address"
           : step === "payment"
-            ? "How would you like to pay?"
-            : "One final look."}
+            ? "Payment"
+            : "Review order"}
       </Title>
       {step === "shipping" ? (
         <>
@@ -152,7 +145,7 @@ export default function Checkout() {
           <T>Delivery</T>
           <Button
             secondary={delivery !== "standard"}
-            label="Standard · 3 to 5 days · $8 or free at $250"
+            label="Standard · 4 to 6 days · $8 or free at $150"
             id="delivery-standard"
             onPress={() => setDelivery("standard")}
           />
@@ -168,6 +161,7 @@ export default function Checkout() {
             onPress={() => {
               if (validate()) {
                 Keyboard.dismiss();
+                scrollRef.current?.scrollTo({ y: 0, animated: false });
                 setStep("payment");
               }
             }}
@@ -183,18 +177,18 @@ export default function Checkout() {
           />
           <Button
             secondary={payment !== "card"}
-            label="Card (demo, no real charge)"
+            label="Card"
             id="payment-card"
             onPress={() => setPayment("card")}
           />
-          <T muted>
-            This is a demo store. No payment details are needed and no charge
-            will be made.
-          </T>
+
           <Button
             label="Review order"
             id="checkout-payment-next"
-            onPress={() => setStep("review")}
+            onPress={() => {
+              scrollRef.current?.scrollTo({ y: 0, animated: false });
+              setStep("review");
+            }}
           />
           <Button
             secondary
@@ -216,15 +210,15 @@ export default function Checkout() {
             {address.phone}
           </T>
           <T>
-            {delivery === "express" ? "Express delivery" : "Standard delivery"}
+            {delivery === "express"
+              ? "Express delivery, 1 to 2 days"
+              : "Standard delivery, 4 to 6 days"}
             {"\n"}
-            {payment === "card"
-              ? "Card (demo, no real charge)"
-              : "Pay on delivery"}
+            {payment === "card" ? "Card" : "Pay on delivery"}
           </T>
           {cart.map((l, i) => (
             <T key={i}>
-              {l.quantity} × {productById(l.productId)?.name} · {l.variant} ·{" "}
+              {l.quantity} × {productById(l.productId)?.name} · Size {l.size} ·{" "}
               {money((productById(l.productId)?.price ?? 0) * l.quantity)}
             </T>
           ))}

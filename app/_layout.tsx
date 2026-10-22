@@ -64,17 +64,14 @@ function Root() {
             name="login"
             options={{ title: "stillform", headerBackVisible: false }}
           />
-          <Stack.Screen name="signup" options={{ title: "Create account" }} />
+          <Stack.Screen name="signup" options={{ title: "stillform" }} />
         </Stack.Protected>
         <Stack.Protected guard={!!state.session}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="product/[id]"
-            options={{ title: "The collection" }}
-          />
+          <Stack.Screen name="product/[id]" options={{ title: "Product" }} />
           <Stack.Screen
             name="category/[slug]"
-            options={{ title: "Shop by room and form" }}
+            options={{ title: "Category" }}
           />
           <Stack.Screen name="checkout" options={{ title: "Checkout" }} />
           <Stack.Screen

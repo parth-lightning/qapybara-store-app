@@ -9,24 +9,19 @@ export default function Home() {
   return (
     <Page>
       <T size={12} muted>
-        Complimentary standard delivery on orders $250 and over
+        Free delivery on orders over $150
       </T>
       <T size={40} style={{ letterSpacing: -1.8, lineHeight: 46 }}>
-        Make room for{"\n"}good light.
+        Made for every day.
       </T>
-      <T muted>
-        Considered lighting. Honest materials. A softer way to come home.
-      </T>
-      <Button
-        label="Explore the collection"
-        onPress={() => router.push("/shop")}
-      />
+      <T muted>Sneakers and clothes you’ll wear on repeat.</T>
+      <Button label="Shop now" onPress={() => router.push("/shop")} />
       <Image
-        source={images["/images/hero.webp"]}
+        source={images["/images/hero-apparel.webp"]}
         style={{ width: "100%", aspectRatio: 1.2 }}
-        accessibilityLabel="Architectural living room with silver lamps"
+        accessibilityLabel="Everyday sneakers and layers"
       />
-      <Title>A light for every corner</Title>
+      <Title>Shop by category</Title>
       <View
         style={{
           flexDirection: "row",
@@ -36,7 +31,6 @@ export default function Home() {
         }}
       >
         {categories.map((c) => {
-          const product = products.find((p) => p.category === c.slug);
           return (
             <Pressable
               key={c.slug}
@@ -47,7 +41,7 @@ export default function Home() {
               style={{ width: "47%", gap: 8 }}
             >
               <Image
-                source={images[product?.images[0] ?? ""]}
+                source={images[c.image]}
                 style={{ width: "100%", aspectRatio: 1 }}
               />
               <T size={20}>{c.name}</T>
@@ -58,17 +52,8 @@ export default function Home() {
           );
         })}
       </View>
-      <Title>Start with these</Title>
+      <Title>Bestsellers</Title>
       <Grid items={products.slice(0, 4)} />
-      <Title>Made for everyday living</Title>
-      <T muted>
-        Each light includes a warm LED bulb. Choose your light temperature on
-        the product page.
-      </T>
-      <T muted>
-        Standard delivery is $8, or complimentary at $250. Express delivery is
-        available at checkout.
-      </T>
     </Page>
   );
 }

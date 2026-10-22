@@ -1,11 +1,18 @@
 import { z } from "zod";
 export const accountInput = z.object({
   email: z
-    .email()
-    .max(200)
+    .email("Enter a valid email")
+    .max(200, "Use a shorter email.")
     .transform((v) => v.toLowerCase().trim()),
-  password: z.string().min(8, "Use at least 8 characters.").max(128),
-  name: z.string().trim().min(2, "Enter your name.").max(80),
+  password: z
+    .string()
+    .min(8, "Use at least 8 characters.")
+    .max(128, "Use 128 characters or fewer."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Enter your name.")
+    .max(80, "Use a shorter name."),
 });
 export const loginInput = accountInput.pick({ email: true, password: true });
 export const userSchema = z.object({
@@ -17,14 +24,30 @@ export type User = z.infer<typeof userSchema>;
 export const cartLineSchema = z.object({
   productId: z.string(),
   quantity: z.number().int().min(1).max(99),
-  variant: z.enum(["Warm white", "Soft white"]),
+  size: z.enum(["7", "8", "9", "10", "11", "12", "XS", "S", "M", "L", "XL"]),
 });
 export type CartLine = z.infer<typeof cartLineSchema>;
 export const addressSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name.").max(80),
-  address: z.string().trim().min(5, "Enter a street address.").max(160),
-  city: z.string().trim().min(2, "Enter your city.").max(80),
-  region: z.string().trim().min(2, "Enter your state.").max(80),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Enter your full name.")
+    .max(80, "Use a shorter name."),
+  address: z
+    .string()
+    .trim()
+    .min(5, "Enter a street address.")
+    .max(160, "Use a shorter address."),
+  city: z
+    .string()
+    .trim()
+    .min(2, "Enter your city.")
+    .max(80, "Use a shorter city name."),
+  region: z
+    .string()
+    .trim()
+    .min(2, "Enter your state.")
+    .max(80, "Use a shorter state name."),
   postal: z.string().regex(/^\d{5}(-\d{4})?$/, "Enter a valid US ZIP code."),
   phone: z
     .string()
@@ -34,7 +57,7 @@ export const addressSchema = z.object({
       return (
         digits.length === 10 || (digits.length === 11 && digits.startsWith("1"))
       );
-    }, "Enter a 10-digit US phone number, optionally with country code +1."),
+    }, "Enter a valid phone number."),
   country: z.literal("United States"),
 });
 export type Address = z.infer<typeof addressSchema>;
@@ -54,6 +77,7 @@ export const totalsSchema = z.object({
 });
 export const orderSchema = z.object({
   id: z.string(),
+  number: z.string().regex(/^SF-\d{5,6}$/),
   userId: z.string(),
   createdAt: z.string(),
   items: z.array(

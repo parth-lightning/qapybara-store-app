@@ -5,31 +5,7 @@ import { router } from "expo-router";
 import { Page, Title, T, Button, Field, ErrorText } from "./ui";
 import { categories, money, products, type Product } from "../lib/catalog";
 import { images } from "../lib/images";
-import { cartReducer } from "../lib/store";
-import { useStore } from "../lib/provider";
 export function ProductCard({ product: p }: { product: Product }) {
-  const { update } = useStore();
-  const [message, setMessage] = useState("");
-  async function add() {
-    try {
-      await update((s) => {
-        if (!s.session) throw new Error("Please sign in.");
-        return {
-          ...s,
-          carts: {
-            ...s.carts,
-            [s.session.id]: cartReducer(s.carts[s.session.id] ?? [], {
-              type: "add",
-              line: { productId: p.id, variant: "Warm white", quantity: 1 },
-            }),
-          },
-        };
-      });
-      setMessage("Added to bag");
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Unable to save. Try again.");
-    }
-  }
   return (
     <View style={{ width: "48%", gap: 8, marginBottom: 16 }}>
       <Pressable
@@ -45,24 +21,12 @@ export function ProductCard({ product: p }: { product: Product }) {
           contentFit="cover"
           accessibilityLabel={`${p.name} ${p.finish}`}
         />
-        <T size={20}>{p.name}</T>
+        <T size={16}>{p.name}</T>
       </Pressable>
       <T size={12} muted>
         {p.finish}
       </T>
       <T>{money(p.price)}</T>
-      <Button
-        secondary
-        label={p.stock ? "Add to bag" : "Out of stock"}
-        id={`add-to-cart-${p.id}`}
-        disabled={!p.stock}
-        onPress={add}
-      />
-      {message ? (
-        <T size={12} accessibilityLiveRegion="polite">
-          {message}
-        </T>
-      ) : null}
     </View>
   );
 }
@@ -112,11 +76,14 @@ export function Listing({ category = "" }: { category?: string }) {
   return (
     <Page>
       <Title>
-        {categories.find((c) => c.slug === cat)?.name ?? "The collection"}
+        {categories.find((c) => c.slug === cat)?.name ?? "Shop all"}
       </Title>
-      <T muted>Considered forms. Honest materials.</T>
+      <T muted>
+        {categories.find((c) => c.slug === cat)?.description ??
+          "Everyday pieces, thoughtfully chosen."}
+      </T>
       <Field
-        label="Search lights"
+        label="Search products"
         id="search-products"
         value={search}
         onChangeText={setSearch}
@@ -176,13 +143,14 @@ export function Listing({ category = "" }: { category?: string }) {
         </>
       ) : null}
       <T size={14} muted>
-        {valid ? items.length : 0} lights
+        {valid ? items.length : 0}{" "}
+        {valid && items.length === 1 ? "product" : "products"}
       </T>
       {valid && items.length ? (
         <Grid items={items} />
       ) : (
         <>
-          <Title>No lights found.</Title>
+          <Title>Nothing found</Title>
           <T muted>Try another search or a wider price range.</T>
           <Button
             label="Clear filters"

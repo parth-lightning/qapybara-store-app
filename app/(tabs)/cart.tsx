@@ -7,6 +7,7 @@ import { useStore } from "../../lib/provider";
 import { cartReducer, type CartAction } from "../../lib/store";
 import { productById, money } from "../../lib/catalog";
 import { images } from "../../lib/images";
+import { totals } from "../../lib/pricing";
 import { Summary } from "../../components/summary";
 export default function Cart() {
   const { state, update } = useStore();
@@ -33,35 +34,31 @@ export default function Cart() {
   }
   return (
     <Page>
-      <Title>Your bag</Title>
       {!cart.length ? (
         <>
           <Image
-            source={images["/images/dome-room.webp"]}
+            source={images["/images/category-sneakers.webp"]}
             style={{ width: "100%", height: 220 }}
           />
-          <Title>Room for something good.</Title>
-          <T muted>Your bag is empty. Find a light that feels at home.</T>
-          <Button
-            label="Explore the collection"
-            onPress={() => router.push("/shop")}
-          />
+          <Title>Your bag is empty</Title>
+          <T muted>Find something you love.</T>
+          <Button label="Start shopping" onPress={() => router.push("/shop")} />
         </>
       ) : (
         <>
           {cart.map((l, i) => {
             const p = productById(l.productId);
             return (
-              <View key={`${l.productId}-${l.variant}`} style={{ gap: 12 }}>
+              <View key={`${l.productId}-${l.size}`} style={{ gap: 12 }}>
                 <Row>
                   <Image
                     source={images[p?.images[0] ?? ""]}
                     style={{ width: 90, height: 90 }}
                   />
                   <View style={{ flex: 1 }}>
-                    <T size={20}>{p?.name ?? "Unavailable light"}</T>
+                    <T size={20}>{p?.name ?? "Unavailable item"}</T>
                     <T size={14} muted>
-                      {l.variant}
+                      Size {l.size}
                     </T>
                     <T>{money((p?.price ?? 0) * l.quantity)}</T>
                   </View>
@@ -104,6 +101,11 @@ export default function Cart() {
             );
           })}
           <ErrorText text={error} />
+          <T muted>
+            {totals(cart).subtotal >= 15000
+              ? "You get free delivery."
+              : `Add ${money(15000 - totals(cart).subtotal)} more for free delivery.`}
+          </T>
           <Summary items={cart} />
           <Button
             label="Continue to checkout"

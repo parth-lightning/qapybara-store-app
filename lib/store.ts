@@ -31,6 +31,35 @@ export const initialState: State = {
   orders: [],
   theme: "system",
 };
+// Retire the previous catalog while retaining local accounts and appearance.
+const savedStateSchema = stateSchema.extend({
+  carts: z.record(z.string(), z.array(z.unknown())),
+  orders: z.array(z.unknown()),
+});
+export function restoreState(value: unknown): State {
+  if (value === null) return initialState;
+  const saved = savedStateSchema.parse(value);
+  const carts = Object.fromEntries(
+    Object.entries(saved.carts).map(([id, lines]) => [
+      id,
+      lines
+        .filter((line) => {
+          const identity = z.object({ productId: z.string() }).parse(line);
+          return !!productById(identity.productId);
+        })
+        .map((line) => cartLineSchema.parse(line)),
+    ]),
+  );
+  const orders = saved.orders
+    .filter((order) => {
+      const identity = z
+        .object({ items: z.array(z.object({ productId: z.string() })) })
+        .parse(order);
+      return identity.items.every((line) => !!productById(line.productId));
+    })
+    .map((order) => orderSchema.parse(order));
+  return stateSchema.parse({ ...saved, carts, orders });
+}
 export const demoUser: User = {
   id: "demo",
   email: "demo@qapybara.dev",
@@ -76,20 +105,22 @@ export type CartAction =
   | {
       type: "quantity";
       productId: string;
-      variant: CartLine["variant"];
+      size: CartLine["size"];
       quantity: number;
     }
-  | { type: "remove"; productId: string; variant: CartLine["variant"] };
+  | { type: "remove"; productId: string; size: CartLine["size"] };
 export function cartReducer(cart: CartLine[], action: CartAction): CartLine[] {
   const line =
     action.type === "add" ? cartLineSchema.parse(action.line) : action;
   const match = (l: CartLine) =>
-    l.productId === line.productId && l.variant === line.variant;
+    l.productId === line.productId && l.size === line.size;
   if (action.type === "remove") return cart.filter((l) => !match(l));
   const old = cart.find(match)?.quantity ?? 0;
   if (action.type === "quantity" && !old) return cart;
   const product = productById(line.productId);
-  if (!product) throw new Error("This light is no longer available.");
+  if (!product) throw new Error("This item is no longer available.");
+  if (!product.sizes.includes(line.size))
+    throw new Error("Please select a size");
   const quantity =
     action.type === "add" ? old + action.line.quantity : action.quantity;
   const other = cart
@@ -101,9 +132,7 @@ export function cartReducer(cart: CartLine[], action: CartAction): CartLine[] {
     quantity > 99 ||
     quantity + other > product.stock
   )
-    throw new Error(
-      `Only ${product.stock} available across light temperatures.`,
-    );
+    throw new Error("The quantity exceeds available stock.");
   if (!old && cart.length >= 32)
     throw new Error("Your bag can hold up to 32 different items.");
   return old
@@ -117,7 +146,7 @@ export function placeOrder(
 ): { state: State; order: Order } {
   if (!state.session) throw new Error("Please sign in again.");
   const data = checkoutSchema.parse(input);
-  const id = `SF-${data.requestId.toUpperCase()}`;
+  const id = data.requestId;
   const existing = state.orders.find(
     (o) => o.id === id && o.userId === state.session?.id,
   );
@@ -130,7 +159,7 @@ export function placeOrder(
     const p = productById(line.productId);
     const count = (counts.get(line.productId) ?? 0) + line.quantity;
     counts.set(line.productId, count);
-    if (!p || count > p.stock)
+    if (!p || !p.sizes.includes(line.size) || count > p.stock)
       throw new Error(
         "One or more items exceed available stock. Please update your bag.",
       );
@@ -138,6 +167,7 @@ export function placeOrder(
   });
   const order: Order = {
     id,
+    number: `SF-${100000 + (Number.parseInt(data.requestId.replaceAll("-", "").slice(0, 8), 16) % 900000)}`,
     userId: state.session.id,
     createdAt: now,
     items,

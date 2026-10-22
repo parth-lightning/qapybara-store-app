@@ -1,50 +1,46 @@
 # Stillform mobile
 
-Standalone offline mobile twin of Stillform, built for QApybara demonstration testing. No backend, API key, remote images or dependency on the web project at runtime. No real payments or deliveries.
+An offline Expo shopping app for sneakers and clothes. Accounts, sessions, per-user bags, orders and appearance are saved locally with AsyncStorage. All photography and fonts are bundled; no backend or network is required. Payments and fulfillment are simulated.
 
 ## Run
 
-Node.js 22+, npm. `npm ci`, then `npm start`. Expo SDK **58** (`expo ~58.0.17`), React Native 0.88, React 19.3, TypeScript, Expo Router. Native modules require a development or release build. Demo login: **demo@qapybara.dev / Demo1234!**. New accounts are local to this installation and sign in through the same login form.
+Node.js 22+, npm. Run `npm ci`, then `npm start`. Expo SDK 58, Expo Router, React Native 0.88, React 19.3 and TypeScript. Use a native development or release build for native modules.
 
-`npm run typecheck`, `npm test`, `npm run lint`, `npx expo-doctor`.
+Existing test login remains `demo@qapybara.dev` / `Demo1234!`. You can also create and sign into local accounts. Passwords are stored as salted SHA-256 digests; this local implementation does not provide server authentication or cross-device sync.
 
-## Source parity and assets
+## Website parity
 
-Copied from `/home/shahid/codes/hackathons/qapybara-store-web` without modifying the website:
+Source: `/home/shahid/codes/hackathons/qapybara-store-web`, commits `7d6379a` and `8e86a75`.
 
-Source website commit at verification: `3bfaf82`.
+- `lib/catalog.ts`, `lib/pricing.ts`, `lib/schema.ts` and `design/tokens.ts` are byte-identical copies.
+- All 38 `public/images/*.webp` files are copied unchanged into `assets/products`. `lib/images.ts` maps their website paths to bundled native modules. Login uses a new wide editorial image in `assets/welcome.webp`.
+- The 16 products are split evenly across Sneakers, Tops, Bottoms and Outerwear. Prices, colours, descriptions, facts and sizes match the website.
+- New built-in image generations supply the fabric S app icon, splash image and wide login photograph. Sources and exact prompts are recorded in `design/DESIGN.md`.
 
-- `design/tokens.ts`, `lib/catalog.ts`, `lib/pricing.ts`, `lib/schema.ts` are byte-identical copies. Tokens have no platform imports. Native consumers translate colors, type, shape and motion into React Native styles.
-- All 25 original generated photographs in `design/assets-src` were copied into this app's `assets/products`, resized to at most 1000px and encoded as WebP at quality 85. `lib/images.ts` resolves the original catalog paths to bundled native assets.
-- `lib/store.ts` adapts the web auth/local/order logic for a local native store. AsyncStorage persists accounts (salted SHA-256 password digests), session, appearance, per-user bags and order snapshots. This is an offline demo authentication implementation. There is no server session or cross-device sync.
-- Two new built-in image generations: `assets/generated/icon-source.png` and `assets/generated/welcome-source.png`. The icon source supplies `assets/icon.png`, `assets/adaptive-icon.png` and `assets/splash.png`; the portrait supplies `assets/welcome.webp`. Empty-bag art reuses the original Dome room image. Prompts and design read: `design/DESIGN.md`.
+## Shopping
 
-Phosphor is pinned to 3.0.6. `scripts/fix-phosphor.cjs` runs on install and removes an unsupported web-only `className` prop from its direct native source export. This keeps direct icon imports small and compatible with native SVG types; no types are suppressed.
+Protected routes: `/`, `/shop`, `/category/[slug]`, `/product/[id]`, `/cart`, `/checkout`, `/confirmation`, `/orders`, `/order/[id]`, `/account`. Signed-out users see `/login` and `/signup`.
 
-## Routes and behavior
+Search, category filtering, newest/price sorting and price ranges work locally. Cards show photo, name, colour and price. Product details offer two swipeable photos, facts and care, quantity controls, and an always-visible purchase button. No size is preselected: sneakers use US 7 to 12; clothing uses XS to XL. Adding without a size shows "Please select a size". Matching product/size pairs merge; different sizes stay separate. Combined stock is enforced across sizes.
 
-`/login`, `/signup`; protected tabs `/` (home), `/shop`, `/cart`, `/orders`, `/account`; `/category/[slug]`, `/product/[id]`, `/checkout` (shipping, payment, review), `/confirmation`, `/order/[id]`.
+Standard delivery costs $8 below $150 and is free from $150. Express costs $18. Tax is 8% of subtotal, rounded to cents. Delivery estimates are 4 to 6 days standard and 1 to 2 days express. Checkout validates US addresses and supports pay on delivery or simulated card payment.
 
-Home includes hero, categories and featured products. Shop supports search, category selection, newest and price sorting, minimum/maximum price. Detail supports swipe gallery, light temperature, quantity and stock. Bags merge matching variants and enforce combined product stock. Badge counts quantities. Checkout validates the original US address rules and offers standard/express delivery and pay-on-delivery/demo-card payment. Placement re-parses inputs, checks current bag and aggregate catalog stock, recomputes integer-cent prices and totals, saves an immutable order snapshot and clears only the current user's bag in one persisted transaction. Request IDs make retries idempotent.
+Order placement revalidates size, stock, current bag and address, recomputes totals, stores a product/size/price snapshot, and clears only the signed-in user's bag. Request UUIDs provide idempotency internally; displayed order numbers use the website's deterministic `SF-` plus six-digit format. Existing accounts, session and appearance survive the catalog upgrade; retired catalog bags and orders are removed during restoration. Invalid current-catalog data triggers the existing storage error/retry state.
 
-Pricing: standard delivery $8 below $250, free at $250 and over; express $18; tax 8% of subtotal rounded to integer cents. Fixed demo stock matches the website. Orders, bags and session persist after process restart. Users only see their own bag and orders. Appearance follows the system initially, with persisted system/light/dark choices in Account. Reanimated fades honor system reduced motion.
+Light, dark and system appearance persist through restarts. Reanimated fades respect reduced motion. Existing Phosphor compatibility fix in `scripts/fix-phosphor.cjs` runs after install.
 
-Key UI automation selectors have matching `testID` and `accessibilityLabel`: `login-email`, `login-password`, `login-submit`, `toggle-password`, `signup-name`, `signup-email`, `signup-password`, `signup-submit`, `search-products`, `product-{id}`, `add-to-cart-{id}`, detail `add-to-cart`, `cart-badge`, `cart-increase-{index}`, `cart-decrease-{index}`, `cart-remove-{index}`, `checkout-start`, `shipping-{field}`, `checkout-shipping-next`, `checkout-payment-next`, `delivery-standard`, `delivery-express`, `payment-delivery`, `payment-card`, `place-order`, `order-number`, `view-orders`, `theme-{system|light|dark}`, `sign-out`.
-
-## Android release
-
-Application name **Stillform**, package **dev.qapybara.stillform**. Locally debug-signed release for the connected arm64 phone. Generated native folders and build outputs are ignored; rebuild from app config:
+## Checks and Android
 
 ```sh
-export ANDROID_HOME=/home/shahid/Android/Sdk
-export JAVA_HOME=/home/shahid/.local/share/java/jdk-17
-npx expo prebuild --platform android --no-install
-./android/gradlew -p android assembleRelease -PreactNativeArchitectures=arm64-v8a --max-workers=4
+npx jest --runInBand
+npx tsc --noEmit
+npm run lint
+bash scripts/build-android.sh
 adb -s 82f1c8d5 install -r android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Equivalent: `scripts/build-android.sh`. Omit the architecture property to build all configured ABIs.
+The build script sets the local JDK/Android SDK paths, regenerates Android with `npx expo prebuild --platform android --no-install`, forces regeneration of the JavaScript/assets bundle so image-only updates are included, then runs Gradle `assembleRelease` for arm64. Release APKs are locally debug-signed for device testing. Generated native folders and APK outputs are ignored.
 
-Final APK: `/home/shahid/codes/hackathons/qapybara-store-app/android/app/build/outputs/apk/release/app-release.apk` (**36,097,699 bytes, 34.43 MiB**). Its SHA-256 matches the APK installed on the phone.
+APK: `android/app/build/outputs/apk/release/app-release.apk`. Exact size, hash, test results and physical-device journey evidence are recorded in `design/VERIFICATION.md` and `design/release.json`. Current screenshots live in `design/screenshots`.
 
-Verification: **42 unit tests pass**, TypeScript and lint pass, **20/20 Expo Doctor checks pass**. The full requested phone journey was exercised, including wrong and correct login, signup/sign-in, shopping, both delivery/payment choices, checkout validation, order confirmation/history, persistence, and account isolation. Details and resolved findings are in `design/VERIFICATION.md`. Screenshots are in `design/screenshots/`. `scripts/phone.py` uses only ADB input, UI Automator dumps and screencap, pinned to device `82f1c8d5`.
+Automation labels include `login-*`, `signup-*`, `search-products`, `filter-{category}`, `product-{id}`, `size-{value}`, `add-to-cart`, `quantity-{increase|decrease}`, `cart-badge`, `cart-{increase|decrease|remove}-{index}`, `checkout-start`, `shipping-{field}`, `delivery-{standard|express}`, `payment-{delivery|card}`, `checkout-shipping-next`, `checkout-payment-next`, `place-order`, `order-number`, `view-orders`, `theme-{system|light|dark}`, and `sign-out`. `scripts/phone.py` uses ADB input, UI Automator and screencap on serial `82f1c8d5`.

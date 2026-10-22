@@ -63,15 +63,15 @@ export function Auth({ signup = false }: { signup?: boolean }) {
           source={require("../assets/welcome.webp")}
           style={{ width: "100%", height: 180 }}
           contentFit="cover"
-          accessibilityLabel="Silver lighting in a calm gray room"
+          accessibilityLabel="Everyday layers in a bright studio"
         />
       ) : null}
       <View>
-        <Title>{signup ? "Make yourself at home." : "Welcome back."}</Title>
+        <Title>{signup ? "Create an account" : "Welcome back"}</Title>
         <T muted>
           {signup
-            ? "Create an account to keep your bag and orders together."
-            : "Good light makes room for living."}
+            ? "Save your bag and follow your orders."
+            : "Your everyday wardrobe starts here."}
         </T>
       </View>
       {created && !signup ? (
@@ -139,15 +139,11 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         label={signup ? "Back to sign in" : "Create an account"}
         onPress={() => router.push(signup ? "/login" : "/signup")}
       />
-      {!signup ? (
+      {signup ? (
         <T size={12} muted>
-          Demo account: demo@qapybara.dev{"\n"}Password: Demo1234!
+          At least 8 characters.
         </T>
-      ) : (
-        <T size={12} muted>
-          Use at least 8 characters for your password.
-        </T>
-      )}
+      ) : null}
     </Page>
   );
 }

@@ -14,7 +14,7 @@ export function totals(
       ? 0
       : delivery === "express"
         ? 1800
-        : subtotal >= 25000
+        : subtotal >= 15000
           ? 0
           : 800;
   const tax = Math.round((subtotal * 8) / 100);

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useState } from "react";
-import { ScrollView, useWindowDimensions } from "react-native";
+import { ScrollView, View, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { Page, Title, T, Button, Row, ErrorText } from "../../components/ui";
 import { productById, money } from "../../lib/catalog";
@@ -12,20 +12,23 @@ export default function Detail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const p = productById(id);
   const { width } = useWindowDimensions();
-  const [variant, setVariant] = useState<CartLine["variant"]>("Warm white");
+  const [size, setSize] = useState<CartLine["size"] | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
-  const [page, setPage] = useState(1);
   const { update } = useStore();
   if (!p)
     return (
       <Page>
-        <Title>Light not found</Title>
+        <Title>Product not found</Title>
         <Button label="Back to shop" onPress={() => router.replace("/shop")} />
       </Page>
     );
   async function add() {
     if (!p) return;
+    if (!size) {
+      setMessage("Please select a size");
+      return;
+    }
     try {
       await update((s) => {
         if (!s.session) throw new Error("Please sign in.");
@@ -35,7 +38,7 @@ export default function Detail() {
             ...s.carts,
             [s.session.id]: cartReducer(s.carts[s.session.id] ?? [], {
               type: "add",
-              line: { productId: p.id, variant, quantity },
+              line: { productId: p.id, size, quantity },
             }),
           },
         };
@@ -48,53 +51,74 @@ export default function Detail() {
     }
   }
   return (
-    <Page>
+    <Page
+      footer={
+        <>
+          <ErrorText text={message.startsWith("Added") ? "" : message} />
+          <Button
+            label={p.stock ? "Add to bag" : "Out of stock"}
+            id="add-to-cart"
+            disabled={!p.stock}
+            onPress={add}
+          />
+          {message.startsWith("Added") ? (
+            <Button
+              secondary
+              label="View bag"
+              onPress={() => router.push("/cart")}
+            />
+          ) : null}
+        </>
+      }
+    >
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) =>
-          setPage(Math.round(e.nativeEvent.contentOffset.x / (width - 40)) + 1)
-        }
       >
         {p.images.map((src, i) => (
           <Image
             key={src}
             source={images[src]}
             contentFit="cover"
-            style={{ width: width - 40, height: width - 40 }}
+            style={{ width: width - 40, height: (width - 40) * 0.85 }}
             accessibilityLabel={`${p.name} image ${i + 1}`}
           />
         ))}
       </ScrollView>
-      <T muted size={12}>
-        {page} / {p.images.length}{" "}
-        {p.images.length > 1 ? " · Swipe to explore" : ""}
-      </T>
       <Row>
-        <Title>{p.name}</Title>
+        <View style={{ flex: 1 }}>
+          <T size={24} style={{ letterSpacing: -0.6 }}>
+            {p.name}
+          </T>
+        </View>
         <T size={20}>{money(p.price)}</T>
       </Row>
       <T muted>{p.finish}</T>
       <T>{p.description}</T>
-      <T size={14} muted>
-        {p.dimensions}
+      <T>
+        {p.stock === 0
+          ? "Out of stock"
+          : p.stock <= 5
+            ? `Only ${p.stock} left`
+            : "In stock"}
       </T>
-      <T>{p.stock ? `${p.stock} available` : "Currently out of stock"}</T>
-      <T>Light temperature</T>
-      <Row>
-        {(["Warm white", "Soft white"] satisfies CartLine["variant"][]).map(
-          (v) => (
+      <T>{p.category === "sneakers" ? "Size (US)" : "Size"}</T>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {p.sizes.map((value) => (
+          <View key={value} style={{ minWidth: 52 }}>
             <Button
-              label={v}
-              key={v}
-              secondary={variant !== v}
-              id={`variant-${v.toLowerCase().replace(" ", "-")}`}
-              onPress={() => setVariant(v)}
+              label={value}
+              secondary={size !== value}
+              id={`size-${value}`}
+              onPress={() => {
+                setSize(value);
+                setMessage("");
+              }}
             />
-          ),
-        )}
-      </Row>
+          </View>
+        ))}
+      </View>
       <Row>
         <Button
           secondary
@@ -112,23 +136,12 @@ export default function Detail() {
           onPress={() => setQuantity((q) => q + 1)}
         />
       </Row>
-      <Button
-        label={p.stock ? "Add to bag" : "Out of stock"}
-        id="add-to-cart"
-        disabled={!p.stock}
-        onPress={add}
-      />
-      <ErrorText text={message.startsWith("Added") ? "" : message} />
-      {message.startsWith("Added") ? (
-        <>
-          <T accessibilityLiveRegion="polite">{message}</T>
-          <Button
-            secondary
-            label="View bag"
-            onPress={() => router.push("/cart")}
-          />
-        </>
-      ) : null}
+      <Title>Details & care</Title>
+      {p.facts.map((fact) => (
+        <T key={fact} size={14} muted>
+          {fact}
+        </T>
+      ))}
     </Page>
   );
 }
