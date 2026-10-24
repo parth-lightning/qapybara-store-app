@@ -62,9 +62,7 @@ export function Listing({ category = "" }: { category?: string }) {
     .filter(
       (p) =>
         (!cat || p.category === cat) &&
-        `${p.name} ${p.finish} ${p.description}`
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
+        p.name.includes(search.trim()) &&
         (!minimum || p.price >= Number(minimum) * 100) &&
         (!maximum || p.price <= Number(maximum) * 100),
     )
