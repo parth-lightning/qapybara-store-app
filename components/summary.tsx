@@ -12,7 +12,12 @@ export function Summary({
   delivery?: "standard" | "express";
   value?: ReturnType<typeof totals>;
 }) {
-  const t = value ?? totals(items ?? [], delivery);
+  const base = value ?? totals(items ?? [], delivery);
+  // Show tax on the full amount the shopper pays, delivery included.
+  const tax = value
+    ? base.tax
+    : Math.round(((base.subtotal + base.shipping) * 8) / 100);
+  const t = { ...base, tax, total: base.subtotal + base.shipping + tax };
   return (
     <View style={{ gap: 12 }}>
       {[

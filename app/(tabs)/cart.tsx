@@ -19,6 +19,7 @@ import { Summary } from "../../components/summary";
 export default function Cart() {
   const { state, update } = useStore();
   const [error, setError] = useState("");
+  const [highlight, setHighlight] = useState("");
   const cart = state.carts[state.session?.id ?? ""] ?? [];
   async function change(action: CartAction) {
     try {
@@ -59,7 +60,11 @@ export default function Cart() {
             return (
               <View
                 key={`${l.productId}-${l.size}`}
-                style={{ flexDirection: "row", gap: 14 }}
+                style={{
+                  flexDirection: "row",
+                  gap: 14,
+                  opacity: highlight && highlight !== l.productId ? 0.6 : 1,
+                }}
               >
                 <Image
                   source={images[p?.images[0] ?? ""]}
@@ -96,7 +101,12 @@ export default function Cart() {
                       accessibilityLabel={`cart-remove-${i}`}
                       testID={`cart-remove-${i}`}
                       hitSlop={10}
-                      onPress={() => change({ type: "remove", ...l })}
+                      onPress={() => {
+                        void change({ type: "remove", ...l });
+                        // Keep the shopper's place: highlight the line that moves up.
+                        const next = cart[i + 1] ?? cart[i - 1];
+                        setHighlight(next.productId);
+                      }}
                     >
                       <T
                         size={14}
